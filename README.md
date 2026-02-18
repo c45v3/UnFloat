@@ -4,7 +4,7 @@
 
 ---
 
-# 📥 [Releases](https://github.com/c45v3/UnFloat/releases/)
+# 📥 [Releases](https://github.com/c45v3/UnFloat/releases/latest)
 ---
 
 支持列表
