@@ -3,13 +3,13 @@ plugins {
 }
 
 android {
-    namespace 'org.UnFloat' 
-    compileSdk 34
+    namespace 'io.c4.UnFloat' 
+    compileSdk 35
 
     defaultConfig {
-        applicationId "org.UnFloat"
+        applicationId "io.c4.UnFloat"
         minSdk 26
-        targetSdk 34
+        targetSdk 35
         versionCode 1
         versionName "1.0"
     }
