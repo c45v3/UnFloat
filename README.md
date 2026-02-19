@@ -13,4 +13,5 @@ com.kuro.cloudgame
 com.miHoYo.cloudgames.Nap
 com.miHoYo.cloudgames.ys
 com.miHoYo.cloudgames.hkrpg
+...
 ```
