@@ -8,9 +8,12 @@ import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam;
 
 public class MainHook implements IXposedHookLoadPackage {
+private static boolean isIntercepted = false;
+
     @Override
     public void handleLoadPackage(LoadPackageParam lpparam) throws Throwable {
-        if (!lpparam.processName.equals(lpparam.packageName)) return;
+       if (isIntercepted) return;
+       if (!lpparam.processName.equals(lpparam.packageName)) return;
 
         XposedHelpers.findAndHookMethod(View.class, "setVisibility", int.class, new XC_MethodHook() {
             @Override
@@ -18,6 +21,7 @@ public class MainHook implements IXposedHookLoadPackage {
                 View v = (View) param.thisObject;
                 if (isTarget(v)) {
                     v.setAlpha(0f);
+                    isIntercepted = true;                     
                 }
             }
         });
