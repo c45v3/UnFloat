@@ -9,9 +9,9 @@
 
 支持列表
 ```
-com.kuro.cloudgame
-com.miHoYo.cloudgames.Nap
-com.miHoYo.cloudgames.ys
-com.miHoYo.cloudgames.hkrpg
+[鸣潮]com.kuro.cloudgame
+[绝区零]com.miHoYo.cloudgames.Nap
+[原神]com.miHoYo.cloudgames.ys
+[崩坏星穹铁道]com.miHoYo.cloudgames.hkrpg
 ...
 ```
