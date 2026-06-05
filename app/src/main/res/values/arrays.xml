@@ -2,6 +2,7 @@
 <resources>
     <string-array name="xposed_scope">
         <item>com.kuro.cloudgame</item>
+        <item>com.pwrd.cloud.yh.laohu</item>
         <item>com.miHoYo.cloudgames.Nap</item>
         <item>com.miHoYo.cloudgames.ys</item>
         <item>com.miHoYo.cloudgames.hkrpg</item>
