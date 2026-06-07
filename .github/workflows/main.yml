@@ -28,17 +28,8 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleRelease -PversionCode=${{ inputs.version_code }} -PversionName=${{ inputs.version_name }}
 
-      - name: Upload Release APK
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: UnFloat-${{ inputs.version_code }}
           path: app/build/outputs/apk/release/*.apk
-
-      - name: Build Debug APK
-        run: ./gradlew assembleDebug -PversionCode=999 -PversionName=9.9.9
-
-      - name: Upload Debug APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: UnFloat-debug
-          path: app/build/outputs/apk/debug/*.apk
