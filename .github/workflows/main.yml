@@ -1,6 +1,11 @@
 name: Release_Build
-on: 
+on:
   workflow_dispatch:
+    inputs:
+      version_code:
+        description: 'versionCode'
+        required: true
+        type: number
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -17,7 +22,7 @@ jobs:
       - name: Build APK
         run: |
           chmod +x gradlew
-          ./gradlew assembleRelease
+          ./gradlew assembleRelease -PversionCode=${{ inputs.version_code }}
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
