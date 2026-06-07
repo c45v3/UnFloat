@@ -14,15 +14,6 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      - name: Auto Update Version
-        run: |
-          VERSION_PREFIX="1.0"
-          VERSION_CODE=${{ github.run_number }}
-          VERSION_NAME="${VERSION_PREFIX}.${{ github.run_number }}"
-          
-          sed -i "s/versionCode [0-9]*/versionCode $VERSION_CODE/" app/build.gradle
-          sed -i "s/versionName \".*\"/versionName \"$VERSION_NAME\"/" app/build.gradle
-
       - name: Build APK
         run: |
           chmod +x gradlew
@@ -31,5 +22,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: UnFloat_v${{ github.run_number }}
+          name: UnFloat
           path: app/build/outputs/apk/release/*.apk
