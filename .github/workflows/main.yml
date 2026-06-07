@@ -31,5 +31,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: UnFloat
+          name: UnFloat-${{ inputs.version_code }}
           path: app/build/outputs/apk/release/*.apk
