@@ -1,5 +1,6 @@
 plugins {
     id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
 }
 
 android {
@@ -26,8 +27,18 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
 }
 
 dependencies {
+    // 运行时由 LSPosed 提供，不能打进 APK
     compileOnly 'de.robv.android.xposed:api:82'
-  }    
+
+    // 按特征定位宿主方法，替代硬编码类名。AAR 自带 4 个 ABI 的 libdexkit.so
+    // 与 keep native 方法的 consumer proguard 规则，无需额外配置
+    implementation 'org.luckypray:dexkit:2.2.0'
+}
+
