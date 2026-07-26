@@ -1,0 +1,22 @@
+# Gradle / Android
+build/
+.gradle/
+local.properties
+*.apk
+*.aab
+
+# IDE
+.idea/
+*.iml
+.DS_Store
+
+# 日志
+*.log
+
+# 本地 aarch64 手工构建链（SDK 的 aapt2/zipalign 是 x86-64，在 aarch64 上跑不了）
+# CI 走 Gradle，不需要这些，故不纳入版本管理
+build.sh
+tools/
+libs/
+AGENT.md
+CLAUDE.md
