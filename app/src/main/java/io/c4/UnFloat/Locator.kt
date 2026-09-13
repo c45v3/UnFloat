@@ -169,6 +169,7 @@ internal object Locator {
      *      （tag `"MiniQueue"`），只认 "Setting" 才不会把排队小窗一起弄没。
      *   2. 不认 tag，只要「无参 void + 把 EasyFloat 的 builder 从 setLayout 一路建到 show」
      *      （终末地）。终末地的 tag 是构造参数传进来的（`"EXIT_VIEW"`），方法体里没有字面量可认。
+     *      1.5.1 仍走这档：`show()` 签名没变，变的是创建之后自己管 alpha。
      *
      * 第 2 档故意排在后面：它在鸣潮里会连排队小窗一起命中，而第 1 档已经先把鸣潮认掉了。
      * 「无参」这个条件同时滤掉了 EasyFloat 自带的 `DragUtils.showAdd(int)` /

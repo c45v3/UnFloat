@@ -83,7 +83,7 @@ class HookEntry : IXposedHookLoadPackage {
         val captured = Collections.synchronizedList(ArrayList<View>())
         val funnels = ArrayList<XC_MethodHook.Unhook>(2)
         val depth = AtomicInteger(0)
-
+        val generation = AtomicInteger(0)
         val catcher = object : XC_MethodHook() {
             override fun afterHookedMethod(param: MethodHookParam) {
                 (param.args.getOrNull(0) as? View)?.let { captured.add(it) }
@@ -94,6 +94,7 @@ class HookEntry : IXposedHookLoadPackage {
             XposedBridge.hookMethod(method, object : XC_MethodHook() {
                 override fun beforeHookedMethod(param: MethodHookParam) {
                     if (depth.getAndIncrement() != 0) return
+                    generation.incrementAndGet()
                     synchronized(funnels) {
                         captured.clear()
                         funnels += hookAddViewFunnels(catcher)
@@ -102,16 +103,27 @@ class HookEntry : IXposedHookLoadPackage {
 
                 override fun afterHookedMethod(param: MethodHookParam) {
                     if (depth.decrementAndGet() != 0) return
-                    // 立刻撤防。addView 对全 App 生效，多挂一秒都是白花的钱。
-                    // 这里是在创建入口的回调里摘 addView 的钩子，两者回调集合不同，同步摘是安全的。
-                    synchronized(funnels) {
-                        funnels.forEach { runCatching { it.unhook() } }
-                        funnels.clear()
+                    val mine = generation.get()
+                    fun disarmAndHide() {
+                        if (generation.get() != mine) return
+                        // 创建入口的回调里摘 addView 的钩子，两者回调集合不同，同步摘是安全的。
+                        synchronized(funnels) {
+                            funnels.forEach { runCatching { it.unhook() } }
+                            funnels.clear()
+                        }
+                        if (hideFloatIcon(captured) == 0) {
+                            // 悬浮窗可能是 post 出去的，没落在同步窗口里 —— 交给按资源名认人的兜底层
+                            Log.i("创建期间未捕获到视图")
+                            installFloatNet()
+                        }
+                        captured.clear()
                     }
-                    if (hideFloatIcon(captured) == 0) {
-                        // 悬浮窗可能是 post 出去的，没落在同步窗口里 —— 交给按资源名认人的兜底层
-                        Log.i("创建期间未捕获到视图")
-                        installFloatNet()
+                    if (synchronized(captured) { captured.isNotEmpty() }) {
+                        disarmAndHide()
+                    } else {
+                        // EasyFloat CURRENT_ACTIVITY 在 token 为空时会 content.post 才 addView。
+                        // 那个 post 排在 show() 返回前，漏斗再留一帧就能接到。
+                        mainHandler.post { disarmAndHide() }
                     }
                 }
             })
@@ -145,7 +157,7 @@ class HookEntry : IXposedHookLoadPackage {
             roots
         }
         targets.forEach { view ->
-            view.fadeOutPersistently()
+            pinHidden(view)
             val tag = view.entryNameOrNull()?.let { " @id/$it" }.orEmpty()
             Log.i("已隐藏 ${view.javaClass.name}$tag")
         }
@@ -156,6 +168,21 @@ class HookEntry : IXposedHookLoadPackage {
     private fun outermost(views: List<View>): List<View> {
         val distinct = views.distinctBy { System.identityHashCode(it) }
         return distinct.filter { v -> distinct.none { it !== v && it.isAncestorOf(v) } }
+    }
+
+    /**
+     * 压球本身，并顺手钉住类名带 easyfloat 的祖先。
+     *
+     * 终末地 1.5.1 的 `setFloatAlpha` 写的是 EasyFloat 的 `ParentFrameLayout`
+     *（inflate(..., parent, true) 的返回值），不是 `float_setting_btn`。
+     * 只压 ImageView 时父节点 alpha 乘上去仍是 0；但贴边/入场动画会把父节点
+     * 当绘制根来改，把祖先也钉住更稳，且原神那棵带菜单的树里没有 easyfloat。
+     */
+    private fun pinHidden(view: View) {
+        view.fadeOutPersistently()
+        generateSequence(view.parent as? View) { it.parent as? View }
+            .firstOrNull { it.javaClass.name.contains(EASY_FLOAT_MARK, ignoreCase = true) }
+            ?.fadeOutPersistently()
     }
 
     // ── 第 2 层：通杀兜底 ─────────────────────────────────────────────────────
@@ -171,7 +198,7 @@ class HookEntry : IXposedHookLoadPackage {
                 val hit = added.findByEntryName(FLOAT_ICON_IDS)
                     ?: added.findByClassFragment(EASY_FLOAT_MARK)
                     ?: return
-                hit.fadeOutPersistently()
+                pinHidden(hit)
                 shot.retire("捞到悬浮窗 ${hit.javaClass.name}")
             }
         }

@@ -19,4 +19,6 @@ build.sh
 tools/
 libs/
 AGENT.md
+AGENTS.md
 CLAUDE.md
+DESIGN.md

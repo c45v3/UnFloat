@@ -4,8 +4,11 @@ import android.os.Handler
 import android.os.Looper
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewTreeObserver
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
+import java.util.Collections
+import java.util.WeakHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 
 internal object Log {
@@ -85,17 +88,36 @@ internal fun View.fadeOut() {
 }
 
 /**
- * 压 alpha，并在随后的几帧再补压两次。
+ * 压 alpha，并在该 View 挂在窗口上的整段生命周期里钉住。
  *
- * 宿主的入场动画（EasyFloat 的 enterAnim 之类）可能把 alpha 动回 1，
- * 补压能把这种情况盖掉。次数写死三次、一秒内结束，不会长期占用主线程。
+ * 终末地 1.5.1 的 `FloatBallManager` 会自己管 alpha：入场动画插到 1、贴边藏到 0.5、
+ * 拖动再拉回 1，写 alpha 贯穿悬浮球的一生。只在 0/300/1000ms 补三次会在 2 秒自动贴边时
+ * 被写穿。OnPreDraw 里发现非 0 就压回去，View 卸下时摘掉监听。
  */
 internal fun View.fadeOutPersistently() {
     fadeOut()
-    longArrayOf(0L, 300L, 1000L).forEach { delay ->
-        mainHandler.postDelayed({ runCatching { fadeOut() } }, delay)
+    if (!pinned.add(this)) return
+
+    val pin = ViewTreeObserver.OnPreDrawListener {
+        if (alpha != 0f) fadeOut()
+        true
+    }
+    addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
+        override fun onViewAttachedToWindow(v: View) {
+            runCatching { v.viewTreeObserver.addOnPreDrawListener(pin) }
+            v.fadeOut()
+        }
+        override fun onViewDetachedFromWindow(v: View) {
+            runCatching { v.viewTreeObserver.removeOnPreDrawListener(pin) }
+        }
+    })
+    if (isAttachedToWindow) {
+        runCatching { viewTreeObserver.addOnPreDrawListener(pin) }
     }
 }
+
+private val pinned: MutableSet<View> =
+    Collections.synchronizedSet(Collections.newSetFromMap(WeakHashMap()))
 
 /** 深度优先找出资源名命中的那个 View。资源名不会被 R8 混淆，是跨版本最稳的锚点。 */
 internal fun View.findByEntryName(names: Set<String>): View? {
